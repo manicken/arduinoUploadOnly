@@ -2,6 +2,9 @@
 a Arduino IDE "plugin" that changes the <br>
 default upload "button" (compile->upload) functionality with a one without the compile<br>
 
+<br>
+the retry count can also be adjusted<br>
+
 ## Install
 
 * global:<br>
@@ -36,7 +39,7 @@ two script is provided:<br>
 
 ## Features
 
-Custom menu at mainManuBar-Extensions-"Manicken Upload Only"<br>
+Custom menu at (mainMenuBar)-Extensions-"Manicken Upload Only"<br>
 that contains:<br>
 Activate()  - activates the Upload Only Button<br>
 Deactivate()  - deactivates the Upload Only Button and restores the original functionality<br>
@@ -45,6 +48,9 @@ note. the button is only replaced by the "plugin" at startup when activated<br>
 and if the plugin is removed or disabled the original button functionality is restored.
 
 ## Settings
+
+(mainMenuBar)-Extensions-"Manicken Upload Only"-Settings<br>
+have the retry count setting (0 means no retries)<br><br>
 
 the activated state is stored in Arduino global preferences.txt<br>
 with the name:<br>
