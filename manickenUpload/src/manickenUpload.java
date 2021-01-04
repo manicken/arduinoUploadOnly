@@ -26,6 +26,7 @@ package com.manicken;
 import javax.swing.JMenuItem;
 import javax.swing.JMenu;
 import javax.swing.Box;
+import javax.swing.JOptionPane; // used by settings dialog
 
 import processing.app.Editor;
 import processing.app.PreferencesData;
@@ -36,13 +37,14 @@ import processing.app.MyEditorToolbar;
 
 import com.manicken.CustomMenu;
 import com.manicken.CustomUploader;
+import com.manicken.SettingsDialog;
 
 /**
  * 
  */
 public class manickenUpload implements Tool
 {
-	int SpacesAfterLineNumber = 4;
+	int retryCount = 0;
 
 	Editor editor;// for the plugin
 	EditorToolbar originalEditorToolBar; // used to restore the original toolbar when this plugin is deactivated
@@ -74,7 +76,8 @@ public class manickenUpload implements Tool
 
 	private void UploadOnly(Boolean isShiftDown)
 	{
-		customUploader.handleExport(isShiftDown, myEditorToolbar);
+
+		customUploader.handleExport(isShiftDown, myEditorToolbar, retryCount);
 		//System.out.println("Upload only pressed");
 	}
 
@@ -127,8 +130,11 @@ public class manickenUpload implements Tool
 					CustomMenu.Item("Activate", event -> Activate()),
 					CustomMenu.Seperator(),
 					CustomMenu.Item("Deactivate", event -> Deactivate()),
+					CustomMenu.Seperator(),
+					CustomMenu.Item("Settings", event -> ShowSettingsDialog()),
 				});
 			cm.Init(true);
+			retryCount = PreferencesData.getInteger("manicken.uploadOnly.retryCount", retryCount);
 
 			if (PreferencesData.getBoolean("manicken.uploadOnly.activated", false))
 			{
@@ -140,6 +146,26 @@ public class manickenUpload implements Tool
 			System.err.println(thisToolMenuTitle + " could not start!!!");
 			return;
 		}
+	}
+
+	private void ShowSettingsDialog()
+	{
+		SettingsDialog sd = new SettingsDialog();
+		sd.txtRetryCount.setText(Integer.toString(retryCount));
+		int result = JOptionPane.showConfirmDialog(editor, sd, "Upload without compile - settings" ,JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+			
+		if (result != JOptionPane.OK_OPTION) {
+			System.out.println("Cancelled");
+			return;
+		}
+		int rc = 0;
+		try {
+			rc = Integer.parseInt(sd.txtRetryCount.getText());
+			retryCount = rc;
+			PreferencesData.setInteger("manicken.uploadOnly.retryCount", retryCount);
+		}
+		catch (Exception e) {System.err.println("Warning Retry count cannot be empty!\nprevious value used:" + retryCount);}
+	
 	}
 
 }

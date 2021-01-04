@@ -22,6 +22,7 @@ public class CustomUploader {
     private Runnable timeoutUploadHandler;
     MyEditorToolbar toolbar;
     processing.app.EditorStatus status;
+    int retryCount = 0;
 
     public CustomUploader(Editor editor)
     {
@@ -34,8 +35,9 @@ public class CustomUploader {
         timeoutUploadHandler = new MyTimeoutUploadHandler();
     }
 
-    synchronized public void handleExport(final boolean usingProgrammer, final MyEditorToolbar toolbar) {
+    synchronized public void handleExport(final boolean usingProgrammer, final MyEditorToolbar toolbar, int retryCount) {
         this.toolbar = toolbar;
+        this.retryCount = retryCount;
         /* if (PreferencesData.getBoolean("editor.save_on_verify")) {
           if (sketch.isModified() && !sketchController.isReadOnly()) {
             handleSave(true);
@@ -174,10 +176,10 @@ public class CustomUploader {
     //boolean success = upload(foundName, usingProgrammer);
     boolean success = true;
     
-    int retryCount = 0;
+    int currRetryCount = 0;
     do {
         success = (boolean)Reflect2.InvokeMethod2("upload", editor.getSketchController(), Reflect2.asArr(foundName, usingProgrammer), Reflect2.asArr(String.class, boolean.class));
-    } while (!success && retryCount++ < 1);
+      } while (!success && currRetryCount++ < retryCount);
 
     status.progressUpdate(100);
     return success;
