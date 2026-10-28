@@ -1,52 +1,65 @@
 
-arduinoInstallDir=~/arduino-1.8.13
-arduinoSketchBookDir=~/Arduino
-className=manickenUpload
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# Resolve the directory containing this script.
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+
+arduinoInstallDir="$HOME/arduino-1.8.13"
+arduinoSketchBookDir="$HOME/Arduino"
+className="manickenUpload"
+
+BIN_DIR="$SCRIPT_DIR/bin"
 
 function cleanPrevBinFiles {
-    cd ./bin
-    rm -r *
-    cd ..
+    if [[ ! -d "$BIN_DIR" ]]; then
+        return 0
+    fi
+
+    # Refuse to clean anything except the expected build directory.
+    if [[ "$BIN_DIR" != "$SCRIPT_DIR/bin" ]]; then
+        echo "Invalid build directory!"
+        return 1
+    fi
+
+    find "$BIN_DIR" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
 }
 
 function compile {
-    mkdir ./bin
-    javac -cp .:$arduinoInstallDir/lib/pde.jar:$arduinoInstallDir/lib/arduino-core.jar:%arduinoInstallDir/lib/jtouchbar-1.0.0.jar -d bin ./src/*.java
-    buildStatus=$?
+    mkdir -p "$BIN_DIR"
+
+    javac -cp ".:$arduinoInstallDir/lib/pde.jar:$arduinoInstallDir/lib/arduino-core.jar:$arduinoInstallDir/lib/jtouchbar-1.0.0.jar" \
+        -d "$BIN_DIR" "$SCRIPT_DIR"/src/*.java
 }
 
 function makeJar {
-    cd bin
-    jar cvf $classname.jar *
-    cd ..
+    (
+        cd "$BIN_DIR"
+        jar cvf "$className.jar" *
+    )
 }
 
 function copyfiles {
-    cp ./bin/$classname.jar ./tool/$classname.jar
-	mkdir $arduinoSketchBookDir/tools/$classname/tool
-	mkdir $arduinoSketchBookDir/tools/$classname/src
-    cp -r ./tool/* $arduinoSketchBookDir/tools/$classname/tool
-    cp -r ./src/* $arduinoSketchBookDir/tools/$classname/src
+    cp "$BIN_DIR/$className.jar" "$SCRIPT_DIR/tool/$className.jar"
 
-    echo ***************
-    echo *** Success ***
-    echo ***************
+    mkdir -p "$arduinoSketchBookDir/tools/$className/tool"
+    mkdir -p "$arduinoSketchBookDir/tools/$className/src"
+
+    cp -r "$SCRIPT_DIR"/tool/* "$arduinoSketchBookDir/tools/$className/tool/"
+    cp -r "$SCRIPT_DIR"/src/* "$arduinoSketchBookDir/tools/$className/src/"
+
+    echo "***************"
+    echo "*** Success ***"
+    echo "***************"
 }
 
 function doStuff {
     cleanPrevBinFiles
     compile
-    success=0
-    if [ $buildStatus -eq $success ];
-    then
-        makeJar
-        copyfiles	
-    else
-        echo Compile error
-    fi
-	cleanPrevBinFiles
+    makeJar
+    copyfiles
+    cleanPrevBinFiles
 }
 
 doStuff
-
-##read -p "Press [Enter] key to continue..."
